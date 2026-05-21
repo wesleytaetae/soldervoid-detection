@@ -3,7 +3,7 @@ from PySide6.QtCore import QThread, Signal
 
 class InferenceWorker(QThread):
     result_ready = Signal(float, bytes)
-    finished     = Signal()
+    completed    = Signal()
     error        = Signal(str)
 
     def __init__(self, model_path: str, image_path: str):
@@ -19,13 +19,13 @@ class InferenceWorker(QThread):
 
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             model = load_production_model(self._model_path, device)
-            void_ratio, _, visual_img = inspect_xray(model, self._image_path, device)
+            void_ratio, _, _, visual_img = inspect_xray(model, self._image_path, device)
 
             ok, buf = cv2.imencode(".png", visual_img)
             if not ok:
                 raise RuntimeError("Failed to encode result image.")
 
             self.result_ready.emit(void_ratio, bytes(buf))
-            self.finished.emit()
+            self.completed.emit()
         except Exception as e:
             self.error.emit(str(e))

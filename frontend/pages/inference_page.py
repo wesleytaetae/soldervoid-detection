@@ -129,6 +129,7 @@ class InferencePage(QWidget):
 
         self._worker = InferenceWorker(model_path, image_path)
         self._worker.result_ready.connect(self._on_result)
+        self._worker.completed.connect(self._on_completed)
         self._worker.finished.connect(self._on_done)
         self._worker.error.connect(self._on_error)
         self._worker.finished.connect(self._worker.deleteLater)
@@ -149,10 +150,14 @@ class InferencePage(QWidget):
 
     def _on_done(self):
         self.run_btn.setEnabled(True)
+        self._worker = None
+
+    def _on_completed(self):
         self.save_btn.setEnabled(True)
 
     def _on_error(self, message: str):
         self.run_btn.setEnabled(True)
+        self.save_btn.setEnabled(False)
         self.result_label.setText("Error!")
         self.image_display.setText("Error")
         QMessageBox.critical(self, "Inference Error", message)
