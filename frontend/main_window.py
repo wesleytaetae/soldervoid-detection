@@ -1,12 +1,13 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QListWidget, QStackedWidget
+from PySide6.QtWidgets import QHBoxLayout, QListWidget, QMainWindow, QStackedWidget, QWidget
 
 from frontend.pages.home_page import HomePage
-from frontend.pages.resize_page import ResizePage
-from frontend.pages.prepare_page import PreparePage
+from frontend.pages.inference_page import InferencePage
+from frontend.pages.iou_page import IoUPage
 from frontend.pages.labelme_page import LabelMePage
 from frontend.pages.mask_page import MaskPage
+from frontend.pages.prepare_page import PreparePage
+from frontend.pages.resize_page import ResizePage
 from frontend.pages.train_page import TrainPage
-from frontend.pages.inference_page import InferencePage
 
 
 class MainWindow(QMainWindow):
@@ -16,16 +17,20 @@ class MainWindow(QMainWindow):
 
         self.nav = QListWidget()
         self.nav.setFixedWidth(185)
-        self.nav.addItems([
-            "  Home",
-            "  1 · Resize",
-            "  2 · Prepare",
-            "  3 · Annotate",
-            "  4 · Compile Masks",
-            "  5 · Train",
-            "  6 · Inference",
-        ])
-        self.nav.setStyleSheet("""
+        self.nav.addItems(
+            [
+                "  Home",
+                "  1 · Resize",
+                "  2 · Prepare",
+                "  3 · Annotate",
+                "  4 · Compile Masks",
+                "  5 · Train",
+                "  6 · Inference",
+                "  7 · IoU",
+            ]
+        )
+        self.nav.setStyleSheet(
+            """
             QListWidget {
                 background: #252525;
                 border: none;
@@ -44,10 +49,10 @@ class MainWindow(QMainWindow):
             QListWidget::item:hover:!selected {
                 background: #333;
             }
-        """)
+        """
+        )
 
         self.stack = QStackedWidget()
-
         pages = [
             HomePage(navigate=self.navigate_to),
             ResizePage(navigate=self.navigate_to),
@@ -56,6 +61,7 @@ class MainWindow(QMainWindow):
             MaskPage(navigate=self.navigate_to),
             TrainPage(navigate=self.navigate_to),
             InferencePage(),
+            IoUPage(),
         ]
         for page in pages:
             self.stack.addWidget(page)

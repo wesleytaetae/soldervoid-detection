@@ -3,7 +3,7 @@ from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QFormLayout,
     QGroupBox, QLabel, QLineEdit, QPushButton,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QCheckBox,
 )
 
 
@@ -60,6 +60,13 @@ class InferencePage(QWidget):
         image_row.addWidget(browse_image)
         image_form.addRow("X-ray image:", image_row)
         left_layout.addWidget(image_group)
+
+        display_group = QGroupBox("Render Options")
+        display_form = QFormLayout(display_group)
+        self.solder_outline_check = QCheckBox("Show solder outline overlay")
+        self.solder_outline_check.setChecked(True)
+        display_form.addRow("", self.solder_outline_check)
+        left_layout.addWidget(display_group)
 
         left_layout.addSpacing(8)
 
@@ -127,7 +134,11 @@ class InferencePage(QWidget):
         self.result_label.setText("Running…")
         self.image_display.setText("Running…")
 
-        self._worker = InferenceWorker(model_path, image_path)
+        self._worker = InferenceWorker(
+            model_path,
+            image_path,
+            show_solder_outline=self.solder_outline_check.isChecked(),
+        )
         self._worker.result_ready.connect(self._on_result)
         self._worker.completed.connect(self._on_completed)
         self._worker.finished.connect(self._on_done)

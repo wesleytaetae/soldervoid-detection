@@ -102,8 +102,8 @@ def _overlay_prediction_shapes(visual_img: np.ndarray, prediction_json: dict) ->
 # ==========================================
 # 2. METROLOGY & VISUALIZATION EXECUTION
 # ==========================================
-@torch.no_grad() 
-def inspect_xray(model, image_path: str, device: torch.device):
+@torch.no_grad()
+def inspect_xray(model, image_path: str, device: torch.device, show_solder_outline: bool = True):
     # 1. Load and normalize the raw X-ray
     raw_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if raw_image is None:
@@ -154,7 +154,8 @@ def inspect_xray(model, image_path: str, device: torch.device):
     cv2.drawContours(visual_img, contours, -1, (0, 0, 255), 2)
 
     # Overlay the solder shape data produced by the model itself.
-    visual_img = _overlay_prediction_shapes(visual_img, prediction_json)
+    if show_solder_outline:
+        visual_img = _overlay_prediction_shapes(visual_img, prediction_json)
     
     # Burn the telemetry text onto the image
     text = f"Solder Void Area: {void_ratio:.2f}%"

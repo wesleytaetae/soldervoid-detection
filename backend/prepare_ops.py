@@ -2,6 +2,22 @@ import cv2
 import os
 
 
+def preprocess_image(
+    image,
+    blur_kernel: int = 3,
+    clahe_clip: float = 12.0,
+    clahe_tile_w: int = 32,
+    clahe_tile_h: int = 32,
+):
+    """Apply the project's denoise + CLAHE pipeline to a single grayscale image."""
+    if blur_kernel % 2 == 0:
+        blur_kernel += 1
+
+    clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile_w, clahe_tile_h))
+    denoised = cv2.medianBlur(image, blur_kernel)
+    return clahe.apply(denoised)
+
+
 def prepare_images_for_labelme(
     input_dir: str,
     output_dir: str,
@@ -14,11 +30,6 @@ def prepare_images_for_labelme(
     """Applies median blur + CLAHE to maximise human visibility in LabelMe."""
     os.makedirs(output_dir, exist_ok=True)
 
-    if blur_kernel % 2 == 0:
-        blur_kernel += 1
-
-    clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile_w, clahe_tile_h))
-
     for filename in os.listdir(input_dir):
         if not filename.endswith(('.jpg', '.jpeg', '.png')):
             continue
@@ -27,8 +38,13 @@ def prepare_images_for_labelme(
         if img is None:
             continue
 
-        denoised = cv2.medianBlur(img, blur_kernel)
-        enhanced = clahe.apply(denoised)
+        enhanced = preprocess_image(
+            img,
+            blur_kernel=blur_kernel,
+            clahe_clip=clahe_clip,
+            clahe_tile_w=clahe_tile_w,
+            clahe_tile_h=clahe_tile_h,
+        )
 
         cv2.imwrite(os.path.join(output_dir, filename), enhanced)
         if on_file_done:
@@ -49,10 +65,13 @@ def preview_single_image(
 
     _, orig_buf = cv2.imencode(".png", img)
 
-    if blur_kernel % 2 == 0:
-        blur_kernel += 1
-    clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile_w, clahe_tile_h))
-    enhanced = clahe.apply(cv2.medianBlur(img, blur_kernel))
+    enhanced = preprocess_image(
+        img,
+        blur_kernel=blur_kernel,
+        clahe_clip=clahe_clip,
+        clahe_tile_w=clahe_tile_w,
+        clahe_tile_h=clahe_tile_h,
+    )
     _, enh_buf = cv2.imencode(".png", enhanced)
 
     return bytes(orig_buf), bytes(enh_buf)
