@@ -147,7 +147,7 @@ Set up the project on a new machine with the following requirements:
 ### 1. Clone the project
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/wesleytaetae/soldervoid-detection
 cd labelme
 ```
 
