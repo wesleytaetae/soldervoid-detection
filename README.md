@@ -1,21 +1,36 @@
 # Solder Void Detection for PQFN X-ray Images
 
-An end-to-end Industrial Machine Learning & Computer Vision Metrology Pipeline that automates solder void detection on a semiconductor factory floor. The system processes raw X-ray images, segments microscopic solder voids, and computes defect ratios to determine pass/fail.
+<p align="center"><b>Trained model weights:</b> <a href="https://huggingface.co/wesleytaetae/soldervoid-detection">https://huggingface.co/wesleytaetae/soldervoid-detection</a></p>
+
+![Example](docs/example-inference.png)
+
+This project showcases a trained deep learning segmentation model for solder void detection in PQFN X-ray images. The core model is a U-Net with a ResNet34 encoder, trained to segment `background`, `solder`, and `void` regions from grayscale industrial X-rays and turn those predictions into measurable void ratios for inspection use.
+
+The emphasis of this repository is the model itself: how the data was prepared, how the network was trained, and how the final predictions are converted into production-style visual and metrology outputs. On 5 unseen test images, the model achieved a mean `Solder IoU` of `0.8541` and a mean `Void IoU` of `0.7496`, showing solid generalization on a small-target defect segmentation problem.
+
+Also included in this repository is a desktop UI built with PySide6 to streamline the full workflow, including image resizing, preprocessing, LabelMe-assisted annotation prep, mask compilation, training, inference visualization, and IoU evaluation.
 
 ---
 
 ## Project Architecture Overview
 
 **Pipeline**
-```
-[ Raw X-Rays ] ➔ [ Data Engineering & CLAHE ] ➔ [ U-Net ResNet34 Core ] ➔ [ OpenCV Metrology Overlay ]
-```
 
-| Layer | Purpose | Key Techniques |
-|---|---|---|
-| Data Engineering | Enhance and prepare raw X-rays | CLAHE contrast boosting, LabelMe vector rasterization, class stacking |
-| Deep Learning Core | Segment solder voids | U-Net with ResNet34 encoder, weighted loss |
-| Metrology Overlay | Compute defect ratio | Pixel-based measurement and thresholding |
+
+![Project pipeline flowchart](docs/pipeline.png)
+
+
+---
+
+## Dataset
+
+The dataset used for this project consists of **30 X-ray images** of a **PQFN device from the same package model**. Each image was manually annotated to separate:
+
+- `Background`
+- `Solder`
+- `Void`
+
+This makes the project a focused, single-device segmentation study rather than a broad multi-package benchmark. The dataset is intentionally small and specialized, which makes the training setup, augmentation strategy, and defect-focused evaluation especially important for achieving useful generalization.
 
 ---
 
@@ -58,8 +73,8 @@ Albumentations applies synchronized transforms to ensure the same spatial matrix
 | Parameter | Value |
 |---|---|
 | Batch size | 8 |
-| Epochs | 500 |
-| Patience | 15 |
+| Epochs | 50 | with auto stop to prevent overfitting
+| Patience | 15 | # of epochs without val loss improvement before stopping
 | Learning rate | 1e-4 |
 | Classes | 3 |
 | Validation split | 0.2 |
@@ -91,26 +106,109 @@ $$
 
 This enables real-time pass/fail logic for microchip inspection.
 
+## Results Findings
+
+Evaluation on 5 unseen images using the baseline training setup with spatial augmentation only:
+
+| Image | Solder IoU | Void IoU |
+|---|---:|---:|
+| New Image 1 | 0.7786 | 0.6921 |
+| New Image 2 | 0.8353 | 0.7498 |
+| New Image 3 | 0.8949 | 0.7941 |
+| New Image 4 | 0.8833 | 0.7684 |
+| New Image 5 | 0.8786 | 0.7436 |
+| **Mean** | **0.8541** | **0.7496** |
+
+These results suggest the model generalizes reasonably well on new samples, with stronger overlap on solder regions and solid void performance for a small-target segmentation problem.
+
 ---
 
-## How to Train
 
-1. Place raw X-ray images in `data/1.input/`.
-2. Run the preprocessing pipeline:
+## Installation
+![Software UI](docs/ui.png)
 
+Set up the project on a new machine with the following requirements:
+
+- Python `3.12+`
+- `uv` for environment and dependency management
+- LabelMe for manual polygon annotation
+- Optional: NVIDIA GPU + compatible CUDA drivers for faster training/inference
+
+### 1. Clone the project
+
+```bash
+git clone <your-repo-url>
+cd labelme
 ```
+
+### 2. Install uv
+
+If `uv` is not already installed:
+
+```bash
+pip install uv
+```
+
+### 3. Create the environment and install Python dependencies
+
+```bash
+uv sync
+```
+
+This installs the project dependencies from `pyproject.toml`, including:
+
+- `torch`, `torchvision`, `torchaudio`
+- `segmentation-models-pytorch`
+- `albumentations`
+- `opencv-python`
+- `pillow`
+- `numpy`
+- `tqdm`
+- `PySide6`
+
+### 4. Install LabelMe
+
+LabelMe is used to create the solder and void polygon annotations before mask compilation.
+<b>LabelMe github repo:</b> <a href="https://github.com/wkentaro/labelme
+">https://github.com/wkentaro/labelme
+</a></p>
+
+```bash
+uv pip install labelme
+```
+
+After installation, you can launch it with:
+
+```bash
+labelme
+```
+
+### 5. Prepare folders and data
+
+Place your data in the expected folders:
+
+- raw X-ray images: `data/1.input/`
+- resized images: `data/2.resize/`
+- prepared images: `data/3.output/`
+- LabelMe JSON annotations: `data/4.json_labels/`
+- compiled masks: `data/5.compiled_masks/`
+
+### 6. Launch the desktop application
+
+```bash
+python app.py
+```
+
+### 7. Optional command-line workflow
+
+If you want to run the pipeline manually instead of using the UI:
+
+```bash
 python main.py resize
 python main.py prepare
 python main.py mask
-```
-
-3. Train the model:
-
-```
 python main.py train
 ```
-
-The training command uses the parameters listed above and saves weights to `best_unet_model.pth`.
 
 ---
 
@@ -124,8 +222,4 @@ python app.py
 
 ---
 
-## Notes
 
-- Designed for industrial datasets with strong class imbalance
-- Tailored to PQFN device solder void segmentation
-- Full pipeline integrates preprocessing, training, inference, and metrology
