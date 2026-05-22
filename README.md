@@ -4,7 +4,7 @@
 
 ![Example](docs/example-inference.png)
 
-This project showcases a trained deep learning segmentation model for solder void detection in PQFN X-ray images. The core model is a U-Net with a ResNet34 encoder, trained to segment `background`, `solder`, and `void` regions from grayscale industrial X-rays and turn those predictions into measurable void ratios for inspection use.
+This project showcases a trained deep learning segmentation model for solder void detection in PQFN X-ray images. In semiconductor packaging, a **PQFN (Power Quad Flat No-Lead)** device is a surface-mount integrated circuit package where solder joints sit underneath the package body, making **X-ray inspection** important for non-destructive quality control. The core model is a U-Net with a ResNet34 encoder, trained to segment `background`, `solder`, and `void` regions from grayscale industrial X-rays and turn those predictions into measurable void ratios for inspection use.
 
 The emphasis of this repository is the model itself: how the data was prepared, how the network was trained, and how the final predictions are converted into production-style visual and metrology outputs. On 5 unseen test images, the model achieved a mean `Solder IoU` of `0.8541` and a mean `Void IoU` of `0.7496`, showing solid generalization on a small-target defect segmentation problem.
 
@@ -24,13 +24,23 @@ Also included in this repository is a desktop UI built with PySide6 to streamlin
 
 ## Dataset
 
-The dataset used for this project consists of **30 X-ray images** of a **PQFN device from the same package model**. Each image was manually annotated to separate:
+The dataset used for this project consists of **30 X-ray images** of a **PQFN semiconductor package from the same device model**. Each image captures the solder joint region beneath the package, where **solder voids**, **joint coverage**, and overall **package-attach quality** are inspected during semiconductor manufacturing.
+
+Each image was manually annotated to separate:
 
 - `Background`
 - `Solder`
 - `Void`
 
-This makes the project a focused, single-device segmentation study rather than a broad multi-package benchmark. The dataset is intentionally small and specialized, which makes the training setup, augmentation strategy, and defect-focused evaluation especially important for achieving useful generalization.
+This makes the project a focused, single-device segmentation study rather than a broad multi-package benchmark. The dataset is intentionally small and specialized, which makes the training setup, augmentation strategy, and defect-focused evaluation especially important for achieving useful generalization in an electronics manufacturing / semiconductor inspection setting.
+
+### Semiconductor Context
+
+- **Package**: The physical housing of the chip, including the external connection structure used for board assembly.
+- **PQFN**: A no-lead power package where the solder joints are mostly hidden underneath the component.
+- **Solder joint**: The conductive attachment between the semiconductor package and the PCB or leadframe landing area.
+- **Void**: An air pocket or gap inside the solder region that can weaken thermal or mechanical reliability.
+- **X-ray inspection**: A standard non-destructive inspection method used when solder features are hidden from normal optical view.
 
 ---
 
